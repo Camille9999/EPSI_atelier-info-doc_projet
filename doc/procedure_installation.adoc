@@ -65,7 +65,7 @@ Activer l'environnement virtuel (au début de chaque nouvelle session) :
 source myenv/bin/activate
 ----
 
-=== Variables d'environnement et libairies python
+=== Variables d'environnement et librairies python
 
 Copier le template d'environnement est le remplir avec les paramètres souhaités +
 [source, shell]
@@ -77,4 +77,15 @@ Installer les librairies python :
 [source, shell]
 ----
 pip install -r requirements.txt
+----
+
+=== Récupération des données
+
+Télécharger le jeu de données Kaggle :
+[source, shell]
+----
+mkdir -p data && curl -L -o data/temp_archive.zip \
+  https://www.kaggle.com/api/v1/datasets/download/dhrubangtalukdar/200-years-of-global-major-earthquakes-18262026 \
+  && unzip -o data/temp_archive.zip -d data \
+  && rm data/temp_archive.zip
 ----
