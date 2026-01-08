@@ -70,7 +70,7 @@ source myenv/bin/activate
 Copier le template d'environnement est le remplir avec les paramètres souhaités +
 [source, shell]
 ----
-cp .env.template .env && sed -i "s|PATH_DATA=.*|PATH_DATA=$(pwd)/src/data|" .env
+cp .env.template .env && sed -i "s|PATH_DATA=.*|PATH_DATA=$(pwd)/data|" .env
 ----
 
 Installer les librairies python :
