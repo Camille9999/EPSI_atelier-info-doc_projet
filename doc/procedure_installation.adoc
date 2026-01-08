@@ -1,0 +1,80 @@
+= Procédure d'installation
+
+== Installation de Python (Ubuntu)
+
+[source, shell]
+----
+sudo apt update
+sudo apt install python3.12.10
+----
+
+== Récupération du repository
+
+Cloner ce repository :
+[source, shell]
+----
+git clone git@github.com:Camille9999/EPSI_atelier-info-doc_projet.git
+----
+
+Se mettre dans le dossier `EPSI_atelier-info-doc_projet` :
+[source, shell]
+----
+cd EPSI_atelier-info-doc_projet
+----
+
+== Mise en place de l'environnement
+
+=== Option 1 : pyenv (recommandée)
+
+Installer pyenv :
+[source, shell]
+----
+pip install pyenv
+----
+
+Créer un environnement virtuel :
+[source, shell]
+----
+pyenv virtualenv 3.12.10 EPSI_atelier-info-doc_projet
+----
+
+Créer un fichier .python-version afin de détecter automatiquement l'envrionnement à utiliser :
+[source, shell]
+----
+touch .python-version
+echo EPSI_atelier-info-doc_projet > .python-version
+----
+
+=== Option 2 : virtualenv
+
+Installer virtualenv :
+[source, shell]
+----
+pip install virtualenv
+----
+
+Créer un environnement virtuel :
+[source, shell]
+----
+virtualenv myenv
+----
+
+Activer l'environnement virtuel (au début de chaque nouvelle session) :
+[source, shell]
+----
+source myenv/bin/activate
+----
+
+=== Variables d'environnement et libairies python
+
+Copier le template d'environnement est le remplir avec les paramètres souhaités +
+[source, shell]
+----
+cp .env.template .env && sed -i "s|PATH_DATA=.*|PATH_DATA=$(pwd)/src/data|" .env
+----
+
+Installer les librairies python :
+[source, shell]
+----
+pip install -r requirements.txt
+----
