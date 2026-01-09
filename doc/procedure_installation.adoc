@@ -85,7 +85,7 @@ Télécharger le jeu de données Kaggle :
 [source, shell]
 ----
 mkdir -p data && curl -L -o data/temp_archive.zip \
-  https://www.kaggle.com/api/v1/datasets/download/dhrubangtalukdar/200-years-of-global-major-earthquakes-18262026 \
+  https://www.kaggle.com/api/v1/datasets/download/warcoder/earthquake-dataset \
   && unzip -o data/temp_archive.zip -d data \
   && rm data/temp_archive.zip
 ----
