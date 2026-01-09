@@ -8,6 +8,7 @@
 **Données utilisées :**
 - Fichier : data/earthquake_data_clean_alert.csv
 - Cible : alert (catégorielle)
+- Features : magnitude, cdi, mmi, tsunami, sig, nst, dmin, gap, depth
 
 **Prétraitement des données :**
 - Suppression des colonnes inutiles ('title', 'date_time', 'net', 'magType', 'latitude', 'longitude', 'location', 'continent', 'country')
