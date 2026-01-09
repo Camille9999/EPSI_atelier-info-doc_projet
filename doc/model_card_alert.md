@@ -1,4 +1,3 @@
-
 # Model Card: Prédiction de l'alerte (alert)
 
 **Date de développement :** 09/01/2026
@@ -9,13 +8,6 @@
 - Fichier : data/earthquake_data_clean_alert.csv
 - Cible : alert (catégorielle)
 - Features : magnitude, cdi, mmi, tsunami, sig, nst, dmin, gap, depth
-
-**Prétraitement des données :**
-- Suppression des colonnes inutiles ('title', 'date_time', 'net', 'magType', 'latitude', 'longitude', 'location', 'continent', 'country')
-- Normalisation : StandardScaler (moyenne=0, écart-type=1) sur colonnes numériques
-- Lignes initiales : 782
-- Lignes après suppression des valeurs manquantes sur `alert` : 415
-- Export : earthquake_data_clean_alert.csv
 
 **Architecture :**
 - LogisticRegression (scikit-learn)
