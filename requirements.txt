@@ -5,3 +5,4 @@ matplotlib
 seaborn
 ipykernel
 dotenv
+xgboost
