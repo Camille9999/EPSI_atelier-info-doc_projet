@@ -1,0 +1,52 @@
+{
+  "alert": {
+    "feature_order": [
+      "magnitude",
+      "cdi",
+      "mmi",
+      "tsunami",
+      "sig",
+      "nst",
+      "dmin",
+      "gap",
+      "depth"
+    ],
+    "numeric_cols": [
+      "magnitude",
+      "cdi",
+      "mmi",
+      "tsunami",
+      "sig",
+      "nst",
+      "dmin",
+      "gap",
+      "depth"
+    ],
+    "categorical_cols": [],
+    "threshold_manual": null
+  },
+  "sig": {
+    "feature_order": [
+      "magnitude",
+      "cdi",
+      "mmi",
+      "tsunami",
+      "nst",
+      "dmin",
+      "gap",
+      "depth"
+    ],
+    "numeric_cols": [
+      "magnitude",
+      "cdi",
+      "mmi",
+      "tsunami",
+      "nst",
+      "dmin",
+      "gap",
+      "depth"
+    ],
+    "categorical_cols": [],
+    "threshold_manual": null
+  }
+}
