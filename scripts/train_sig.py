@@ -1,12 +1,12 @@
 """
-Script d'entraînement du modèle sig (RandomForestRegressor).
+Script d'entraînement du modèle sig.
 
 Reproduit exactement le pipeline du notebook robustesse_imputation.ipynb :
   1. Chargement et nettoyage des données brutes
   2. Split 80/20 (test_size=0.2, random_state=42)
   3. Imputation médiane (SimpleImputer) + mise à l'échelle (StandardScaler) sur X
   4. Entraînement IsolationForest (contamination="auto", random_state=42)
-  5. Entraînement RandomForestRegressor avec GridSearchCV
+  5. Entraînement du modèle choisi
      – cible : sig BRUT (non standardisé)
   6. Sauvegarde des artefacts dans models/imputation/
 
@@ -17,6 +17,7 @@ Usage :
     python scripts/train_sig.py
     python scripts/train_sig.py --input data/earthquake_data.csv
     python scripts/train_sig.py --threshold -0.618
+    python scripts/train_sig.py --model gradient_boosting --artifacts-dir models/imputation_gradient_boosting
 """
 
 import argparse
@@ -27,7 +28,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import IsolationForest, RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor, IsolationForest, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -47,6 +48,7 @@ COLUMNS_TO_DROP = [
 ]
 
 DEFAULT_THRESHOLD: float = -0.61
+MODEL_CHOICES = ("random_forest", "gradient_boosting")
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +152,32 @@ def train_random_forest(
     return gs.best_estimator_, gs.best_params_
 
 
+def train_gradient_boosting(
+    X_train_scaled: np.ndarray,
+    y_train: pd.Series,
+) -> tuple[GradientBoostingRegressor, dict]:
+    """
+    Entraîne un deuxième modèle sans tuning, comme demandé dans la consigne.
+    Le prétraitement, l'IsolationForest et le format des artefacts restent identiques.
+    """
+    model = GradientBoostingRegressor(random_state=42)
+    model.fit(X_train_scaled, y_train)
+    return model, {"random_state": 42}
+
+
+def train_regressor(
+    model_name: str,
+    X_train_scaled: np.ndarray,
+    y_train: pd.Series,
+):
+    """Entraîne le régresseur demandé et retourne (model, infos)."""
+    if model_name == "random_forest":
+        return train_random_forest(X_train_scaled, y_train)
+    if model_name == "gradient_boosting":
+        return train_gradient_boosting(X_train_scaled, y_train)
+    raise ValueError(f"Modèle non supporté : {model_name}")
+
+
 # ---------------------------------------------------------------------------
 # Sauvegarde
 # ---------------------------------------------------------------------------
@@ -158,10 +186,11 @@ def train_random_forest(
 def save_artifacts(
     preproc: dict,
     iso: IsolationForest,
-    model: RandomForestRegressor,
+    model,
     threshold: float,
     artifacts_dir: Path,
     metadata_path: Path,
+    model_name: str,
 ) -> None:
     """
     Sauvegarde imputer, scaler, isolation forest et modèle RF.
@@ -186,6 +215,7 @@ def save_artifacts(
         "numeric_cols":     preproc["numeric_cols"],
         "categorical_cols": preproc["categorical_cols"],
         "threshold_manual": threshold,
+        "model_name":       model_name,
     }
 
     with open(metadata_path, "w", encoding="utf-8") as f:
@@ -205,7 +235,7 @@ def save_artifacts(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Entraîne et sauvegarde le modèle sig (RandomForestRegressor)."
+        description="Entraîne et sauvegarde un modèle sig."
     )
     parser.add_argument(
         "--input", default=str(DATA_PATH),
@@ -218,6 +248,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--artifacts-dir", default=str(ARTIFACTS_DIR),
         help=f"Répertoire de sauvegarde (défaut : {ARTIFACTS_DIR})",
+    )
+    parser.add_argument(
+        "--model",
+        choices=MODEL_CHOICES,
+        default="random_forest",
+        help="Modèle à entraîner : random_forest ou gradient_boosting (défaut : random_forest).",
     )
     return parser.parse_args()
 
@@ -253,14 +289,23 @@ def main() -> None:
     scores_test = iso.score_samples(X_test_scaled)
     print(f"  IF scores (test) : min={scores_test.min():.4f}  max={scores_test.max():.4f}")
 
-    model, best_params = train_random_forest(X_train_scaled, y_train)
+    model, model_info = train_regressor(args.model, X_train_scaled, y_train)
     y_pred = model.predict(X_test_scaled)
     rmse = float(np.sqrt(mean_squared_error(y_test, y_pred)))
-    print(f"  RF meilleurs params : {best_params}")
+    print(f"  Modele : {args.model}")
+    print(f"  Infos modele : {model_info}")
     print(f"  RMSE (test, sig brut) : {rmse:.2f}")
 
     print(f"[5/5] Sauvegarde dans {artifacts_dir}")
-    save_artifacts(preproc, iso, model, args.threshold, artifacts_dir, metadata_path)
+    save_artifacts(
+        preproc,
+        iso,
+        model,
+        args.threshold,
+        artifacts_dir,
+        metadata_path,
+        args.model,
+    )
 
     print("\nEntrainement termine.")
 
