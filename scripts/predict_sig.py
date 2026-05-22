@@ -32,7 +32,7 @@ ARTIFACTS_DIR = PROJECT_ROOT / "models" / "imputation"
 METADATA_PATH = ARTIFACTS_DIR / "metadata.json"
 
 # Seuil d'isolation retenu manuellement (cf. robustesse_imputation.ipynb)
-DEFAULT_THRESHOLD: float = -0.618
+DEFAULT_THRESHOLD: float = -0.61
 
 # Colonnes supprimées lors du pré-traitement initial
 COLUMNS_TO_DROP = [

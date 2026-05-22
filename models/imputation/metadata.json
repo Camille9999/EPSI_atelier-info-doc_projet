@@ -47,6 +47,6 @@
       "depth"
     ],
     "categorical_cols": [],
-    "threshold_manual": null
+    "threshold_manual": -0.61
   }
 }
