@@ -21,7 +21,7 @@ Le pipeline complet enchaîne :
 | # | Scénario | Valeurs en entrée | Résultat attendu |
 |---|----------|-------------------|-----------------|
 | 01-A | Chargement depuis le répertoire par défaut | `ARTIFACTS_DIR` valide | Dictionnaire avec clés `imputer_num`, `scaler`, `isolation_forest`, `model`, `feature_order`, `numeric_cols`, `categorical_cols` |
-| 01-B | Types sklearn corrects | Même artefacts | `SimpleImputer`, `StandardScaler`, `IsolationForest`, `RandomForestRegressor` |
+| 01-B | Types sklearn corrects | Même artefacts | `SimpleImputer`, `StandardScaler`, `IsolationForest`, `RandomForestRegressor`,  `GradientBoosting`|
 | 01-C | `feature_order` contient les 8 colonnes | Même artefacts | `["magnitude","cdi","mmi","tsunami","nst","dmin","gap","depth"]` |
 | 01-D | Répertoire inexistant | Chemin invalide | Exception levée |
 

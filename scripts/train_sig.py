@@ -33,11 +33,14 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import StandardScaler
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 DATA_PATH     = PROJECT_ROOT / "data" / "earthquake_data.csv"
-ARTIFACTS_DIR = PROJECT_ROOT / "models" / "imputation"
+ARTIFACTS_DIR = Path(os.getenv("ARTIFACT_DIR"))
 METADATA_PATH = ARTIFACTS_DIR / "metadata.json"
 
 # Colonnes supprimées avant entraînement (identique à predict_sig.py)
@@ -246,7 +249,7 @@ def _parse_args() -> argparse.Namespace:
         help=f"Seuil IF à enregistrer dans metadata.json (défaut : {DEFAULT_THRESHOLD})",
     )
     parser.add_argument(
-        "--artifacts-dir", default=str(ARTIFACTS_DIR),
+        "--artifacts-dir", default="/".join(str(ARTIFACTS_DIR).split("/")[:-1]),
         help=f"Répertoire de sauvegarde (défaut : {ARTIFACTS_DIR})",
     )
     parser.add_argument(
@@ -261,7 +264,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
 
-    artifacts_dir = Path(args.artifacts_dir)
+    artifacts_dir = Path(args.artifacts_dir)/args.model
     metadata_path = artifacts_dir / "metadata.json"
     input_path    = Path(args.input)
 

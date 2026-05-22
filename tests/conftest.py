@@ -17,6 +17,9 @@ import pandas as pd
 import pytest
 
 from scripts.predict_sig import ARTIFACTS_DIR, load_artifacts
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Constantes
@@ -24,6 +27,7 @@ from scripts.predict_sig import ARTIFACTS_DIR, load_artifacts
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RAW_CSV_PATH = PROJECT_ROOT / "data" / "earthquake_data.csv"
+ARTIFACTS_DIR = Path(os.getenv("ARTIFACT_DIR"))
 
 # Colonnes caractéristiques utilisées par le modèle sig
 FEATURE_COLS = ["magnitude", "cdi", "mmi", "tsunami", "nst", "dmin", "gap", "depth"]

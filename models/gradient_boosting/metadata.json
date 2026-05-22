@@ -1,0 +1,27 @@
+{
+  "sig": {
+    "feature_order": [
+      "magnitude",
+      "cdi",
+      "mmi",
+      "tsunami",
+      "nst",
+      "dmin",
+      "gap",
+      "depth"
+    ],
+    "numeric_cols": [
+      "magnitude",
+      "cdi",
+      "mmi",
+      "tsunami",
+      "nst",
+      "dmin",
+      "gap",
+      "depth"
+    ],
+    "categorical_cols": [],
+    "threshold_manual": -0.61,
+    "model_name": "gradient_boosting"
+  }
+}
