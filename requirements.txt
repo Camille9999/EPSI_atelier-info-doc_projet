@@ -8,3 +8,5 @@ dotenv
 xgboost
 pytest
 joblib
+keras
+tensorflow
