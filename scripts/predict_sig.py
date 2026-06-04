@@ -22,13 +22,16 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 
 # ---------------------------------------------------------------------------
 # Chemins par défaut (relatifs à la racine du projet)
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-ARTIFACTS_DIR = PROJECT_ROOT / "models" / "imputation"
+ARTIFACTS_DIR = Path(os.getenv("ARTIFACT_DIR"))
 METADATA_PATH = ARTIFACTS_DIR / "metadata.json"
 
 # Seuil d'isolation retenu manuellement (cf. robustesse_imputation.ipynb)

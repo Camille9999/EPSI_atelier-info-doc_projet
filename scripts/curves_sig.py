@@ -14,6 +14,7 @@ Usage :
     python scripts/curves_sig.py --output figures/
     python scripts/curves_sig.py --no-show --output figures/
     python scripts/curves_sig.py --n-rows 1000
+    python scripts/curves_sig.py --no-show --output figures/ --compare-artifacts-dir models/imputation_gradient_boosting
 """
 
 import argparse
@@ -116,6 +117,33 @@ def _rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     if valid.sum() == 0:
         return float("nan")
     return float(np.sqrt(np.mean((y_true[valid] - y_pred[valid]) ** 2)))
+
+
+def _slugify_label(label: str) -> str:
+    """Nom de dossier simple à partir d'un label de modèle."""
+    safe = "".join(ch.lower() if ch.isalnum() else "_" for ch in label.strip())
+    return "_".join(part for part in safe.split("_") if part) or "modele"
+
+
+def _model_name_from_artifacts(artifacts: dict, fallback: str) -> str:
+    """Récupère le nom du modèle depuis metadata.json si disponible."""
+    return str(artifacts.get("model_name") or fallback)
+
+
+def compute_baseline_metrics(df: pd.DataFrame, artifacts: dict) -> dict[str, float]:
+    """Calcule quelques métriques rapides pour comparer deux modèles."""
+    _, df_test = train_test_split(df, test_size=0.2, random_state=42)
+    y_true = df_test["sig"].values
+    results = predict(df_test, artifacts, keep_anomalies=True)
+    predictions = results["prediction"].values
+    scores = results["iso_score"].values
+
+    return {
+        "rmse": _rmse(y_true, predictions),
+        "coverage_default_threshold": float((scores >= DEFAULT_THRESHOLD).mean() * 100),
+        "mean_iso_score": float(np.mean(scores)),
+        "n_rows_test": float(len(df_test)),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -640,6 +668,21 @@ def _parse_args() -> argparse.Namespace:
         default=str(ARTIFACTS_DIR),
         help=f"Répertoire des artefacts (défaut : {ARTIFACTS_DIR}).",
     )
+    parser.add_argument(
+        "--compare-artifacts-dir",
+        default=None,
+        help="Deuxième répertoire d'artefacts à comparer au modèle principal.",
+    )
+    parser.add_argument(
+        "--model-label",
+        default="ancien_modele",
+        help="Label du modèle principal dans les sorties de comparaison.",
+    )
+    parser.add_argument(
+        "--compare-label",
+        default="nouveau_modele",
+        help="Label du deuxième modèle dans les sorties de comparaison.",
+    )
     return parser.parse_args()
 
 
@@ -658,30 +701,75 @@ def main() -> None:
         print(f"[ERREUR] Fichier d'entrée introuvable : {input_path}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Chargement des artefacts depuis : {artifacts_dir}")
-    artifacts = load_artifacts(artifacts_dir)
-
     print(f"Chargement des données depuis : {input_path} ({args.n_rows} lignes max)")
     df = pd.read_csv(input_path).head(args.n_rows)
     print(f"  → {len(df)} lignes, {df.shape[1]} colonnes")
 
-    print("\n[1/6] Courbe de sensibilité au bruit")
-    plot_noise_sensitivity(df, artifacts, output_dir=output_dir, show=show)
+    artifact_sets: list[tuple[str, Path, dict]] = []
 
-    print("\n[2/6] Courbe de sensibilité à l'imputation")
-    plot_imputation_sensitivity(df, artifacts, output_dir=output_dir, show=show)
+    print(f"Chargement des artefacts depuis : {artifacts_dir}")
+    artifacts = load_artifacts(artifacts_dir)
+    artifact_sets.append((args.model_label, artifacts_dir, artifacts))
 
-    print("\n[3/6] Méthode du coude – score d'anomalie")
-    plot_elbow_anomaly_score(df, artifacts, output_dir=output_dir, show=show)
+    if args.compare_artifacts_dir:
+        compare_dir = Path(args.compare_artifacts_dir)
+        if not compare_dir.is_dir():
+            print(
+                f"[ERREUR] Répertoire d'artefacts de comparaison introuvable : {compare_dir}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        print(f"Chargement des artefacts de comparaison depuis : {compare_dir}")
+        compare_artifacts = load_artifacts(compare_dir)
+        artifact_sets.append((args.compare_label, compare_dir, compare_artifacts))
 
-    print("\n[4/6] Impact du bruit par feature")
-    plot_noise_impact_per_feature(df, artifacts, output_dir=output_dir, show=show)
+    comparison_mode = len(artifact_sets) > 1
+    metrics_rows = []
 
-    print("\n[5/6] Impact de l'imputation par feature")
-    plot_imputation_impact_per_feature(df, artifacts, output_dir=output_dir, show=show)
+    for label, current_dir, current_artifacts in artifact_sets:
+        model_name = _model_name_from_artifacts(current_artifacts, label)
+        current_output_dir = output_dir
+        if comparison_mode and output_dir is not None:
+            current_output_dir = output_dir / _slugify_label(label)
 
-    print("\n[6/6] Robustesse – RMSE et coverage selon le seuil d'isolation")
-    plot_robustness_curve(df, artifacts, output_dir=output_dir, show=show)
+        print(f"\n=== Courbes pour {label} ({model_name}) ===")
+        print(f"Artefacts : {current_dir}")
+
+        metrics = compute_baseline_metrics(df, current_artifacts)
+        metrics_rows.append({"label": label, "model_name": model_name, **metrics})
+        print(
+            "  RMSE baseline={rmse:.2f} | coverage seuil défaut={coverage_default_threshold:.1f}%".format(
+                **metrics
+            )
+        )
+
+        print("\n[1/6] Courbe de sensibilité au bruit")
+        plot_noise_sensitivity(df, current_artifacts, output_dir=current_output_dir, show=show)
+
+        print("\n[2/6] Courbe de sensibilité à l'imputation")
+        plot_imputation_sensitivity(df, current_artifacts, output_dir=current_output_dir, show=show)
+
+        print("\n[3/6] Méthode du coude – score d'anomalie")
+        plot_elbow_anomaly_score(df, current_artifacts, output_dir=current_output_dir, show=show)
+
+        print("\n[4/6] Impact du bruit par feature")
+        plot_noise_impact_per_feature(df, current_artifacts, output_dir=current_output_dir, show=show)
+
+        print("\n[5/6] Impact de l'imputation par feature")
+        plot_imputation_impact_per_feature(df, current_artifacts, output_dir=current_output_dir, show=show)
+
+        print("\n[6/6] Robustesse – RMSE et coverage selon le seuil d'isolation")
+        plot_robustness_curve(df, current_artifacts, output_dir=current_output_dir, show=show)
+
+    if comparison_mode:
+        metrics_df = pd.DataFrame(metrics_rows)
+        print("\n=== Synthèse comparaison ===")
+        print(metrics_df.to_string(index=False))
+        if output_dir is not None:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            metrics_path = output_dir / "model_comparison_metrics.csv"
+            metrics_df.to_csv(metrics_path, index=False)
+            print(f"  → Sauvegardé : {metrics_path}")
 
     print("\nTerminé.")
 

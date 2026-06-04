@@ -11,16 +11,20 @@ Cas couverts :
 from pathlib import Path
 
 import pytest
-from sklearn.ensemble import IsolationForest, RandomForestRegressor
+from sklearn.ensemble import IsolationForest, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
 from scripts.predict_sig import ARTIFACTS_DIR, load_artifacts
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # UC-01-A : Clés du dictionnaire
 # ---------------------------------------------------------------------------
 
+ARTIFACTS_DIR = Path(os.getenv("ARTIFACT_DIR"))
 EXPECTED_KEYS = {
     "feature_order",
     "numeric_cols",
@@ -59,7 +63,7 @@ def test_isolation_forest_type(artifacts):
 
 def test_model_type(artifacts):
     """UC-01-B : model est un RandomForestRegressor."""
-    assert isinstance(artifacts["model"], RandomForestRegressor)
+    assert isinstance(artifacts["model"], RandomForestRegressor) or isinstance(artifacts["model"], GradientBoostingRegressor)
 
 
 # ---------------------------------------------------------------------------
